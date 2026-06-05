@@ -15,6 +15,7 @@ import custosRoutes from './modules/obras/custos/custos.routes';
 import fornecedoresRoutes from './modules/obras/fornecedores/fornecedores.routes';
 import equipeRoutes from './modules/obras/equipe/equipe.routes';
 import { obraPORouter, poRouter } from './modules/purchase-orders/purchase-orders.routes';
+import dashboardRoutes from './modules/dashboard/dashboard.routes';
 import { getByTokenHandler, signHandler } from './modules/signatures/signatures.controller';
 
 export const app = express();
@@ -52,6 +53,7 @@ app.use('/api/obras/:obraId/fornecedores', fornecedoresRoutes);
 app.use('/api/obras/:obraId/equipe', equipeRoutes);
 app.use('/api/obras/:obraId/purchase-orders', obraPORouter);
 app.use('/api/purchase-orders', poRouter);
+app.use('/api', dashboardRoutes);
 
 // Arquivos estáticos de upload
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
