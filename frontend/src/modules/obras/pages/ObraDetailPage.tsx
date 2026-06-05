@@ -4,6 +4,7 @@ import { api } from '@/shared/lib/api'
 import { Card, Badge, Button, Modal, Input, Spinner } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '@/shared/lib/format'
 import { ObraStepsChecklist } from '../components/ObraStepsChecklist'
+import { VistoriaForm } from '../components/VistoriaForm'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -16,12 +17,6 @@ interface Obra {
   budget: string; orcamentoRealizado: string; pctOrcamento: number
   startDate: string | null; endDate: string | null; createdAt: string
   contract: { id: string; title: string } | null
-}
-
-interface Photo { id: string; url: string; filename: string }
-interface Vistoria {
-  id: string; type: 'INITIAL' | 'FINAL'; description: string
-  createdAt: string; photos: Photo[]
 }
 
 interface Custo {
@@ -106,114 +101,6 @@ function maskCnpj(v: string): string {
 
 function apiError(err: unknown): string {
   return (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro inesperado.'
-}
-
-// ─── Tab: Vistorias ───────────────────────────────────────────────────────────
-
-function VistoriasTab({ obraId }: { obraId: string }) {
-  const [vistorias, setVistorias] = useState<Vistoria[]>([])
-  const [loading, setLoading] = useState(true)
-  const [addOpen, setAddOpen] = useState(false)
-  const [addForm, setAddForm] = useState({ type: 'INITIAL' as 'INITIAL' | 'FINAL', description: '' })
-  const [addLoading, setAddLoading] = useState(false)
-  const [addError, setAddError] = useState('')
-
-  const fetch = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await api.get<Vistoria[]>(`/obras/${obraId}/vistorias`)
-      setVistorias(res.data)
-    } finally { setLoading(false) }
-  }, [obraId])
-
-  useEffect(() => { fetch() }, [fetch])
-
-  async function handleAdd() {
-    if (!addForm.description.trim()) { setAddError('Informe a descrição.'); return }
-    setAddLoading(true); setAddError('')
-    try {
-      await api.post(`/obras/${obraId}/vistorias`, addForm)
-      setAddOpen(false)
-      fetch()
-    } catch (err) { setAddError(apiError(err)); setAddLoading(false) }
-  }
-
-  if (loading) return <div className="flex h-40 items-center justify-center"><Spinner /></div>
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-secondary-500">{vistorias.length} vistoria{vistorias.length !== 1 ? 's' : ''} registrada{vistorias.length !== 1 ? 's' : ''}</p>
-        <Button size="sm" onClick={() => { setAddForm({ type: 'INITIAL', description: '' }); setAddError(''); setAddOpen(true) }}>
-          + Nova vistoria
-        </Button>
-      </div>
-
-      {vistorias.length === 0 ? (
-        <Card>
-          <div className="py-12 text-center">
-            <p className="text-sm text-secondary-400">Nenhuma vistoria registrada.</p>
-            <button onClick={() => setAddOpen(true)} className="mt-2 text-xs font-medium text-primary-600 hover:text-primary-700">
-              Registrar primeira vistoria →
-            </button>
-          </div>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {vistorias.map((v) => (
-            <Card key={v.id}>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Badge variant={v.type === 'INITIAL' ? 'warning' : 'success'}>
-                      {v.type === 'INITIAL' ? 'Vistoria Inicial' : 'Vistoria Final'}
-                    </Badge>
-                    <span className="text-xs text-secondary-400">{formatDate(v.createdAt)}</span>
-                  </div>
-                  <p className="text-sm text-secondary-700 leading-relaxed">{v.description}</p>
-                </div>
-              </div>
-              {v.photos.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {v.photos.map((p) => (
-                    <a key={p.id} href={p.url} target="_blank" rel="noreferrer"
-                      className="block h-20 w-20 overflow-hidden rounded-lg border border-secondary-200 bg-secondary-50">
-                      <img src={p.url} alt={p.filename} className="h-full w-full object-cover" />
-                    </a>
-                  ))}
-                </div>
-              )}
-              {v.photos.length === 0 && (
-                <p className="mt-2 text-xs text-secondary-400">Sem fotos. Upload de fotos disponível via API.</p>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
-
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Nova vistoria" size="sm"
-        footer={<><Button variant="secondary" onClick={() => setAddOpen(false)}>Cancelar</Button><Button onClick={handleAdd} loading={addLoading}>Registrar</Button></>}
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-secondary-700 mb-1.5">Tipo</label>
-            <select value={addForm.type} onChange={(e) => setAddForm((f) => ({ ...f, type: e.target.value as 'INITIAL' | 'FINAL' }))}
-              className="w-full rounded-lg border border-secondary-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400">
-              <option value="INITIAL">Vistoria Inicial</option>
-              <option value="FINAL">Vistoria Final</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-secondary-700 mb-1.5">Descrição <span className="text-danger-500">*</span></label>
-            <textarea value={addForm.description} onChange={(e) => setAddForm((f) => ({ ...f, description: e.target.value }))} rows={4}
-              className="w-full rounded-lg border border-secondary-200 px-3 py-2 text-sm placeholder-secondary-400 focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
-              placeholder="Descreva o estado atual da obra…" />
-          </div>
-          {addError && <p className="rounded-lg border border-danger-200 bg-danger-50 px-3 py-2 text-sm text-danger-600">{addError}</p>}
-        </div>
-      </Modal>
-    </div>
-  )
 }
 
 // ─── Tab: Custos ──────────────────────────────────────────────────────────────
@@ -864,7 +751,7 @@ export function ObraDetailPage() {
         </div>
         <div className="mt-4">
           {activeTab === 'roteiro'      && <ObraStepsChecklist obraId={obra.id} />}
-          {activeTab === 'vistorias'    && <VistoriasTab    obraId={obra.id} />}
+          {activeTab === 'vistorias'    && <VistoriaForm    obraId={obra.id} />}
           {activeTab === 'custos'       && <CustosTab       obraId={obra.id} budget={obra.budget} />}
           {activeTab === 'fornecedores' && <FornecedoresTab obraId={obra.id} />}
           {activeTab === 'equipe'       && <EquipeTab       obraId={obra.id} />}
