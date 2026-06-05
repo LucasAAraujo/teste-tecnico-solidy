@@ -11,6 +11,7 @@ import { ContractManagerPage } from '@/modules/contracts/pages/ContractManagerPa
 import { TemplatesListPage } from '@/modules/templates/pages/TemplatesListPage'
 import { SignaturesQueuePage } from '@/modules/signatures/pages/SignaturesQueuePage'
 import { SignPage } from '@/modules/signatures/pages/SignPage'
+import { ObrasListPage } from '@/modules/obras/pages/ObrasListPage'
 
 function PrivateRoute() {
   const token = useAuthStore((s) => s.token)
@@ -43,7 +44,7 @@ export function AppRouter() {
           <Route path="/contracts/:id" element={<ContractDetailPage />} />
           <Route path="/templates" element={<TemplatesListPage />} />
           <Route path="/signatures/queue" element={<SignaturesQueuePage />} />
-          <Route path="/obras" element={<ComingSoon name="Obras" />} />
+          <Route path="/obras" element={<ObrasListPage />} />
           <Route path="/obras/:id" element={<ComingSoon name="Obra" />} />
           <Route path="/purchase-orders" element={<ComingSoon name="Ordens de Compra" />} />
           <Route path="/reports" element={<ComingSoon name="Relatórios" />} />
