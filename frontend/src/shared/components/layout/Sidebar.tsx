@@ -72,15 +72,33 @@ const navItems: NavItem[] = [
   },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void
+}
+
+export function Sidebar({ onClose }: SidebarProps) {
   return (
     <aside className="flex h-full w-60 flex-col bg-secondary-900 text-white">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2.5 px-5 border-b border-secondary-700">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white font-bold text-sm">
-          S
+      <div className="flex h-16 items-center justify-between gap-2.5 px-5 border-b border-secondary-700">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white font-bold text-sm shrink-0">
+            S
+          </div>
+          <span className="text-base font-semibold tracking-tight">Solidy</span>
         </div>
-        <span className="text-base font-semibold tracking-tight">Solidy</span>
+        {/* Close button — mobile only */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="md:hidden rounded-lg p-1.5 text-secondary-400 hover:bg-secondary-800 hover:text-white transition-colors"
+            aria-label="Fechar menu"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Nav */}
@@ -89,6 +107,7 @@ export function Sidebar() {
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={onClose}
             className={({ isActive }) =>
               [
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
@@ -108,6 +127,7 @@ export function Sidebar() {
       <div className="border-t border-secondary-700 p-3">
         <NavLink
           to="/settings"
+          onClick={onClose}
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-secondary-400 hover:bg-secondary-800 hover:text-white transition-colors"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">

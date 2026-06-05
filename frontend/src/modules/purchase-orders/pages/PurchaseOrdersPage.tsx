@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '@/shared/lib/api'
-import { Card, Badge, Button, Modal, Spinner } from '@/shared/components/ui'
+import { Card, Badge, Button, Modal, SkeletonTable } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '@/shared/lib/format'
+import { useToast } from '@/shared/store/toast.store'
 import { PurchaseOrderForm } from '../components/PurchaseOrderForm'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -49,6 +50,7 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function PurchaseOrdersPage() {
+  const toast = useToast()
   const [orders, setOrders]   = useState<PurchaseOrder[]>([])
   const [total, setTotal]     = useState(0)
   const [loading, setLoading] = useState(true)
@@ -104,8 +106,11 @@ export function PurchaseOrdersPage() {
     setApproveLoading(true)
     try {
       await api.patch(`/purchase-orders/${approveId}/approve`)
+      toast.success('Ordem de compra aprovada.')
       setApproveId(null)
       fetchOrders()
+    } catch {
+      toast.error('Erro ao aprovar ordem de compra.')
     } finally {
       setApproveLoading(false)
     }
@@ -116,8 +121,11 @@ export function PurchaseOrdersPage() {
     setCancelLoading(true)
     try {
       await api.patch(`/purchase-orders/${cancelId}/cancel`)
+      toast.success('Ordem de compra cancelada.')
       setCancelId(null)
       fetchOrders()
+    } catch {
+      toast.error('Erro ao cancelar ordem de compra.')
     } finally {
       setCancelLoading(false)
     }
@@ -188,10 +196,11 @@ export function PurchaseOrdersPage() {
       </Card>
 
       {/* Table */}
+      {loading ? (
+        <SkeletonTable rows={6} cols={8} />
+      ) : (
       <Card padding={false}>
-        {loading ? (
-          <div className="flex h-40 items-center justify-center"><Spinner /></div>
-        ) : orders.length === 0 ? (
+        {orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <svg className="h-10 w-10 text-secondary-200" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
@@ -322,6 +331,7 @@ export function PurchaseOrdersPage() {
           </>
         )}
       </Card>
+      )}
 
       {/* Create form modal */}
       <PurchaseOrderForm

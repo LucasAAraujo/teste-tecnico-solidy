@@ -5,9 +5,10 @@ import { useAuthStore } from '@/modules/auth/store/auth.store'
 interface TopBarProps {
   companyName?: string
   userName?: string
+  onMenuClick?: () => void
 }
 
-export function TopBar({ companyName = 'Solidy', userName = 'Usuário' }: TopBarProps) {
+export function TopBar({ companyName = 'Solidy', userName = 'Usuário', onMenuClick }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
@@ -36,9 +37,21 @@ export function TopBar({ companyName = 'Solidy', userName = 'Usuário' }: TopBar
     .toUpperCase()
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-secondary-200 bg-white px-6">
-      {/* Nome da empresa */}
-      <span className="text-sm font-medium text-secondary-500">{companyName}</span>
+    <header className="flex h-16 items-center justify-between border-b border-secondary-200 bg-white px-4 md:px-6">
+      <div className="flex items-center gap-3">
+        {/* Hamburger — mobile only */}
+        <button
+          onClick={onMenuClick}
+          className="md:hidden rounded-lg p-1.5 text-secondary-500 hover:bg-secondary-100 transition-colors"
+          aria-label="Abrir menu"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+        {/* Company name */}
+        <span className="text-sm font-medium text-secondary-500">{companyName}</span>
+      </div>
 
       {/* Menu do usuário */}
       <div className="relative" ref={menuRef}>
@@ -49,7 +62,7 @@ export function TopBar({ companyName = 'Solidy', userName = 'Usuário' }: TopBar
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-white text-xs font-semibold">
             {initials}
           </div>
-          <span className="text-sm font-medium text-secondary-700">{userName}</span>
+          <span className="hidden sm:block text-sm font-medium text-secondary-700">{userName}</span>
           <svg className="h-4 w-4 text-secondary-400" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
           </svg>

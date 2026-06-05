@@ -3,6 +3,7 @@ import { api } from '@/shared/lib/api'
 import { Badge, Button, Modal, Input, Spinner } from '@/shared/components/ui'
 import { formatDate } from '@/shared/lib/format'
 import { useAuthStore } from '@/modules/auth/store/auth.store'
+import { useToast } from '@/shared/store/toast.store'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,6 +32,7 @@ const ROLE_OPTIONS: Role[] = ['ADMIN', 'USER', 'VIEWER']
 
 export function UsersManagementPage() {
   const currentUser = useAuthStore((s) => s.user)
+  const toast = useToast()
 
   const [users, setUsers]   = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -86,12 +88,14 @@ export function UsersManagementPage() {
     try {
       await api.post('/users/invite', { email: inviteEmail.trim(), role: inviteRole })
       setInviteSuccess(true)
+      toast.success('Convite enviado com sucesso.')
       fetchUsers()
     } catch (err: unknown) {
-      setInviteError(
+      const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
         'Erro ao convidar usuário.'
-      )
+      setInviteError(msg)
+      toast.error(msg)
       setInviteLoading(false)
     }
   }
@@ -108,7 +112,10 @@ export function UsersManagementPage() {
     try {
       await api.patch(`/users/${userId}`, { role: editRoleVal })
       setEditRoleId(null)
+      toast.success('Função atualizada.')
       fetchUsers()
+    } catch {
+      toast.error('Erro ao alterar função.')
     } finally {
       setRoleLoading(false)
     }
@@ -123,8 +130,11 @@ export function UsersManagementPage() {
     setToggleLoading(true)
     try {
       await api.patch(`/users/${toggleId}`, { active: !toggleTarget.active })
+      toast.success(toggleTarget.active ? 'Usuário desativado.' : 'Usuário reativado.')
       setToggleId(null)
       fetchUsers()
+    } catch {
+      toast.error('Erro ao alterar status do usuário.')
     } finally {
       setToggleLoading(false)
     }

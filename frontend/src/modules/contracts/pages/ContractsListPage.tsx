@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '@/shared/lib/api'
-import { Card, Button, Input, Select, Spinner } from '@/shared/components/ui'
+import { Card, Button, Input, Select, SkeletonTable } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '@/shared/lib/format'
 import { ContractStatusBadge } from '../components/ContractStatusBadge'
 import { VigenciaCounter } from '../components/VigenciaCounter'
@@ -167,12 +167,9 @@ export function ContractsListPage() {
       </Card>
 
       {/* Table */}
-      <Card padding={false}>
-        {loading ? (
-          <div className="flex h-64 items-center justify-center">
-            <Spinner size="lg" />
-          </div>
-        ) : contracts.length === 0 ? (
+      {loading && <SkeletonTable rows={8} cols={7} />}
+      <Card padding={false} className={loading ? 'hidden' : ''}>
+        {contracts.length === 0 ? (
           <div className="py-16 text-center">
             <svg
               className="mx-auto h-10 w-10 text-secondary-200"

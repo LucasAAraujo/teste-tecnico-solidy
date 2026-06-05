@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '@/shared/lib/api'
 import { Card, Button, Input, Spinner } from '@/shared/components/ui'
 import { useAuthStore } from '@/modules/auth/store/auth.store'
+import { useToast } from '@/shared/store/toast.store'
 import { UsersManagementPage } from './UsersManagementPage'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -31,6 +32,7 @@ function maskCnpj(v: string) {
 
 function CompanySettings() {
   const { user, setUser } = useAuthStore()
+  const toast = useToast()
 
   const [company, setCompany]   = useState<Company | null>(null)
   const [loading, setLoading]   = useState(true)
@@ -39,7 +41,6 @@ function CompanySettings() {
   const [cnpj, setCnpj]         = useState('')
   const [saveLoading, setSaveLoading] = useState(false)
   const [saveError, setSaveError]     = useState('')
-  const [saveSuccess, setSaveSuccess] = useState(false)
 
   const isAdmin = user?.role === 'ADMIN'
 
@@ -58,7 +59,6 @@ function CompanySettings() {
     setName(company.name)
     setCnpj(company.cnpj)
     setSaveError('')
-    setSaveSuccess(false)
     setEditing(true)
   }
 
@@ -71,7 +71,6 @@ function CompanySettings() {
     if (!name.trim()) { setSaveError('Informe o nome da empresa.'); return }
     setSaveLoading(true)
     setSaveError('')
-    setSaveSuccess(false)
     try {
       const res = await api.put<Company>('/companies/me', {
         name: name.trim(),
@@ -79,16 +78,16 @@ function CompanySettings() {
       })
       setCompany(res.data)
       setEditing(false)
-      setSaveSuccess(true)
-      // Update auth store so TopBar reflects new name
+      toast.success('Dados da empresa atualizados.')
       if (user) {
         setUser({ ...user, company: { id: res.data.id, name: res.data.name, cnpj: res.data.cnpj } })
       }
     } catch (err: unknown) {
-      setSaveError(
+      const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
         'Erro ao salvar configurações.'
-      )
+      setSaveError(msg)
+      toast.error(msg)
       setSaveLoading(false)
     }
   }
@@ -159,11 +158,6 @@ function CompanySettings() {
                   </span>
                 </div>
               </div>
-              {saveSuccess && (
-                <p className="rounded-lg border border-success-200 bg-success-50 px-3 py-2 text-sm text-success-700">
-                  Dados atualizados com sucesso.
-                </p>
-              )}
             </>
           )}
         </div>

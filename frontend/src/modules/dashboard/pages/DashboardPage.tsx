@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '@/shared/lib/api'
-import { Card, CardHeader, Badge, Spinner } from '@/shared/components/ui'
+import { Card, CardHeader, Badge, SkeletonKpiGrid, SkeletonCard } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '@/shared/lib/format'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -141,8 +141,13 @@ export function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <Spinner size="lg" />
+      <div className="space-y-6">
+        <SkeletonKpiGrid cards={4} />
+        <div className="grid gap-5 lg:grid-cols-2">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+        <SkeletonCard />
       </div>
     )
   }
