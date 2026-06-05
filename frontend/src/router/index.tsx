@@ -10,6 +10,7 @@ import { ContractDetailPage } from '@/modules/contracts/pages/ContractDetailPage
 import { ContractManagerPage } from '@/modules/contracts/pages/ContractManagerPage'
 import { TemplatesListPage } from '@/modules/templates/pages/TemplatesListPage'
 import { SignaturesQueuePage } from '@/modules/signatures/pages/SignaturesQueuePage'
+import { SignPage } from '@/modules/signatures/pages/SignPage'
 
 function PrivateRoute() {
   const token = useAuthStore((s) => s.token)
@@ -30,6 +31,7 @@ export function AppRouter() {
       {/* Públicas */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/sign/:token" element={<SignPage />} />
 
       {/* Protegidas */}
       <Route element={<PrivateRoute />}>
