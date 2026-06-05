@@ -5,11 +5,11 @@ import { Card, Badge, Button, Modal, Input, Spinner } from '@/shared/components/
 import { formatCurrency, formatDate } from '@/shared/lib/format'
 import { ObraStepsChecklist } from '../components/ObraStepsChecklist'
 import { VistoriaForm } from '../components/VistoriaForm'
+import { CustoForm } from '../components/CustoForm'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ObraStatus = 'PLANNING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
-type CostCategory = 'mao_de_obra' | 'material' | 'equipamento' | 'servico_terceiro' | 'outro'
 type POStatus = 'DRAFT' | 'APPROVED' | 'CANCELLED'
 
 interface Obra {
@@ -17,17 +17,6 @@ interface Obra {
   budget: string; orcamentoRealizado: string; pctOrcamento: number
   startDate: string | null; endDate: string | null; createdAt: string
   contract: { id: string; title: string } | null
-}
-
-interface Custo {
-  id: string; category: CostCategory; description: string
-  amount: string; date: string
-}
-
-interface CustosData {
-  custos: Custo[]
-  totaisPorCategoria: Record<CostCategory, string>
-  totalRealizado: string
 }
 
 interface Fornecedor {
@@ -61,16 +50,6 @@ const STATUS_CFG: Record<ObraStatus, { label: string; variant: 'default' | 'warn
   CANCELLED:   { label: 'Cancelada',    variant: 'danger',   dot: 'bg-secondary-400' },
 }
 
-const COST_CATEGORY_LABELS: Record<CostCategory, string> = {
-  mao_de_obra:       'Mão de obra',
-  material:          'Material',
-  equipamento:       'Equipamento',
-  servico_terceiro:  'Serviço terceiro',
-  outro:             'Outro',
-}
-
-const COST_CATEGORIES: CostCategory[] = ['mao_de_obra', 'material', 'equipamento', 'servico_terceiro', 'outro']
-
 const PO_STATUS_CFG: Record<POStatus, { label: string; variant: 'default' | 'success' | 'danger' }> = {
   DRAFT:     { label: 'Rascunho',  variant: 'default'  },
   APPROVED:  { label: 'Aprovada',  variant: 'success'  },
@@ -101,168 +80,6 @@ function maskCnpj(v: string): string {
 
 function apiError(err: unknown): string {
   return (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro inesperado.'
-}
-
-// ─── Tab: Custos ──────────────────────────────────────────────────────────────
-
-function CustosTab({ obraId, budget }: { obraId: string; budget: string }) {
-  const [data, setData] = useState<CustosData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [addOpen, setAddOpen] = useState(false)
-  const [addForm, setAddForm] = useState({ category: 'material' as CostCategory, description: '', amount: '', date: '' })
-  const [addLoading, setAddLoading] = useState(false)
-  const [addError, setAddError] = useState('')
-
-  const fetch = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await api.get<CustosData>(`/obras/${obraId}/custos`)
-      setData(res.data)
-    } finally { setLoading(false) }
-  }, [obraId])
-
-  useEffect(() => { fetch() }, [fetch])
-
-  async function handleAdd() {
-    const amount = parseFloat(addForm.amount.replace(',', '.'))
-    if (!addForm.description.trim() || isNaN(amount) || amount <= 0 || !addForm.date) {
-      setAddError('Preencha todos os campos corretamente.'); return
-    }
-    setAddLoading(true); setAddError('')
-    try {
-      await api.post(`/obras/${obraId}/custos`, {
-        category: addForm.category,
-        description: addForm.description.trim(),
-        amount,
-        date: new Date(addForm.date).toISOString(),
-      })
-      setAddOpen(false)
-      fetch()
-    } catch (err) { setAddError(apiError(err)); setAddLoading(false) }
-  }
-
-  if (loading) return <div className="flex h-40 items-center justify-center"><Spinner /></div>
-  if (!data) return null
-
-  const previsto = parseFloat(String(budget))
-  const realizado = parseFloat(String(data.totalRealizado))
-  const pct = previsto > 0 ? Math.min((realizado / previsto) * 100, 100) : 0
-  const barColor = pct >= 90 ? 'bg-danger-500' : pct >= 70 ? 'bg-warning-400' : 'bg-success-500'
-
-  return (
-    <div className="space-y-4">
-      {/* Budget summary */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        {[
-          { label: 'Previsto',   value: formatCurrency(budget),           color: 'text-secondary-900' },
-          { label: 'Realizado',  value: formatCurrency(data.totalRealizado), color: pct >= 90 ? 'text-danger-600' : 'text-secondary-900' },
-          { label: 'Saldo',      value: formatCurrency(String(previsto - realizado)), color: previsto - realizado < 0 ? 'text-danger-600' : 'text-success-600' },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="rounded-xl border border-secondary-200 bg-white p-4">
-            <p className="text-xs text-secondary-500">{label}</p>
-            <p className={`mt-1 text-lg font-bold ${color}`}>{value}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Progress bar */}
-      <div className="rounded-xl border border-secondary-200 bg-white px-4 py-3">
-        <div className="flex justify-between mb-1">
-          <span className="text-xs text-secondary-500">Consumido</span>
-          <span className={`text-xs font-semibold ${pct >= 90 ? 'text-danger-600' : 'text-success-600'}`}>{pct.toFixed(1)}%</span>
-        </div>
-        <div className="h-2 w-full rounded-full bg-secondary-100">
-          <div className={`h-2 rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
-        </div>
-      </div>
-
-      {/* By category */}
-      <Card padding={false}>
-        <div className="flex items-center justify-between border-b border-secondary-100 px-4 py-3">
-          <h3 className="text-sm font-semibold text-secondary-700">Por categoria</h3>
-          <Button size="sm" onClick={() => { setAddForm({ category: 'material', description: '', amount: '', date: '' }); setAddError(''); setAddOpen(true) }}>
-            + Lançar custo
-          </Button>
-        </div>
-        <div className="divide-y divide-secondary-50">
-          {COST_CATEGORIES.map((cat) => {
-            const val = parseFloat(String(data.totaisPorCategoria[cat] ?? 0))
-            const catPct = previsto > 0 ? Math.min((val / previsto) * 100, 100) : 0
-            return (
-              <div key={cat} className="flex items-center gap-4 px-4 py-3">
-                <span className="w-36 flex-shrink-0 text-sm text-secondary-700">{COST_CATEGORY_LABELS[cat]}</span>
-                <div className="flex-1">
-                  <div className="h-1.5 w-full rounded-full bg-secondary-100">
-                    <div className="h-1.5 rounded-full bg-primary-400" style={{ width: `${catPct}%` }} />
-                  </div>
-                </div>
-                <span className="w-24 flex-shrink-0 text-right text-sm font-medium text-secondary-900">{formatCurrency(String(val))}</span>
-              </div>
-            )
-          })}
-        </div>
-      </Card>
-
-      {/* Lancamentos table */}
-      {data.custos.length > 0 && (
-        <Card padding={false}>
-          <div className="border-b border-secondary-100 px-4 py-3">
-            <h3 className="text-sm font-semibold text-secondary-700">Lançamentos</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-secondary-100 bg-secondary-50">
-                  {['Data', 'Categoria', 'Descrição', 'Valor'].map((h) => (
-                    <th key={h} className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-secondary-500">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-secondary-100">
-                {data.custos.map((c) => (
-                  <tr key={c.id} className="hover:bg-secondary-50">
-                    <td className="px-4 py-2 text-secondary-600 whitespace-nowrap">{formatDate(c.date)}</td>
-                    <td className="px-4 py-2">
-                      <Badge variant="default">{COST_CATEGORY_LABELS[c.category]}</Badge>
-                    </td>
-                    <td className="px-4 py-2 text-secondary-700">{c.description}</td>
-                    <td className="px-4 py-2 font-medium text-secondary-900 whitespace-nowrap">{formatCurrency(c.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      )}
-
-      {/* Add custo modal */}
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Lançar custo" size="sm"
-        footer={<><Button variant="secondary" onClick={() => setAddOpen(false)}>Cancelar</Button><Button onClick={handleAdd} loading={addLoading}>Lançar</Button></>}
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-secondary-700 mb-1.5">Categoria</label>
-            <select value={addForm.category} onChange={(e) => setAddForm((f) => ({ ...f, category: e.target.value as CostCategory }))}
-              className="w-full rounded-lg border border-secondary-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400">
-              {COST_CATEGORIES.map((c) => <option key={c} value={c}>{COST_CATEGORY_LABELS[c]}</option>)}
-            </select>
-          </div>
-          <Input label="Descrição" value={addForm.description} onChange={(e) => setAddForm((f) => ({ ...f, description: e.target.value }))} required />
-          <div>
-            <label className="block text-sm font-medium text-secondary-700 mb-1.5">Valor (R$) <span className="text-danger-500">*</span></label>
-            <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-secondary-500">R$</span>
-              <input type="text" inputMode="decimal" placeholder="0,00" value={addForm.amount}
-                onChange={(e) => setAddForm((f) => ({ ...f, amount: e.target.value }))}
-                className="w-full rounded-lg border border-secondary-200 pl-9 pr-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400" />
-            </div>
-          </div>
-          <Input label="Data" type="date" value={addForm.date} onChange={(e) => setAddForm((f) => ({ ...f, date: e.target.value }))} required />
-          {addError && <p className="rounded-lg border border-danger-200 bg-danger-50 px-3 py-2 text-sm text-danger-600">{addError}</p>}
-        </div>
-      </Modal>
-    </div>
-  )
 }
 
 // ─── Tab: Fornecedores ────────────────────────────────────────────────────────
@@ -675,7 +492,7 @@ export function ObraDetailPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start gap-4">
         <button onClick={() => navigate('/obras')}
-          className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-secondary-600 hover:bg-secondary-100">
+          className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-secondary-600 hover:bg-secondary-100">
           ←
         </button>
         <div className="flex-1 min-w-0">
@@ -723,7 +540,7 @@ export function ObraDetailPage() {
             <div className="flex-1 h-2 rounded-full bg-secondary-100">
               <div className={`h-2 rounded-full ${barColor}`} style={{ width: `${Math.min(pct, 100)}%` }} />
             </div>
-            <span className={`text-xs font-bold flex-shrink-0 ${pct >= 90 ? 'text-danger-600' : 'text-secondary-700'}`}>{pct.toFixed(0)}%</span>
+            <span className={`text-xs font-bold shrink-0 ${pct >= 90 ? 'text-danger-600' : 'text-secondary-700'}`}>{pct.toFixed(0)}%</span>
           </div>
           <p className="mt-1 text-xs text-secondary-400">
             {formatDate(obra.startDate)} — {formatDate(obra.endDate)}
@@ -739,7 +556,7 @@ export function ObraDetailPage() {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={[
-                'flex-shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
+                'shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
                 activeTab === tab.key
                   ? 'border-primary-600 text-primary-600'
                   : 'border-transparent text-secondary-500 hover:text-secondary-700',
@@ -752,7 +569,7 @@ export function ObraDetailPage() {
         <div className="mt-4">
           {activeTab === 'roteiro'      && <ObraStepsChecklist obraId={obra.id} />}
           {activeTab === 'vistorias'    && <VistoriaForm    obraId={obra.id} />}
-          {activeTab === 'custos'       && <CustosTab       obraId={obra.id} budget={obra.budget} />}
+          {activeTab === 'custos'       && <CustoForm        obraId={obra.id} budget={obra.budget} />}
           {activeTab === 'fornecedores' && <FornecedoresTab obraId={obra.id} />}
           {activeTab === 'equipe'       && <EquipeTab       obraId={obra.id} />}
           {activeTab === 'oc'           && <OCTab           obraId={obra.id} />}
@@ -767,7 +584,7 @@ export function ObraDetailPage() {
           {(['PLANNING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as ObraStatus[]).map((s) => (
             <label key={s} className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3 transition-colors ${newStatus === s ? 'border-primary-500 bg-primary-50' : 'border-secondary-200 hover:border-secondary-300'}`}>
               <input type="radio" name="status" value={s} checked={newStatus === s} onChange={() => setNewStatus(s)} className="hidden" />
-              <span className={`h-2.5 w-2.5 rounded-full flex-shrink-0 ${STATUS_CFG[s].dot}`} />
+              <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${STATUS_CFG[s].dot}`} />
               <span className="text-sm font-medium text-secondary-800">{STATUS_CFG[s].label}</span>
             </label>
           ))}
