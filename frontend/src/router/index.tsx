@@ -3,6 +3,7 @@ import { AppLayout } from '@/shared/components/layout/AppLayout'
 import { useAuthStore } from '@/modules/auth/store/auth.store'
 import { LoginPage } from '@/modules/auth/pages/LoginPage'
 import { RegisterPage } from '@/modules/auth/pages/RegisterPage'
+import { DashboardPage } from '@/modules/dashboard/pages/DashboardPage'
 
 function PrivateRoute() {
   const token = useAuthStore((s) => s.token)
@@ -27,7 +28,7 @@ export function AppRouter() {
       {/* Protegidas */}
       <Route element={<PrivateRoute />}>
         <Route element={<AppLayout />}>
-          <Route path="/dashboard" element={<ComingSoon name="Dashboard" />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/contracts" element={<ComingSoon name="Contratos" />} />
           <Route path="/contracts/:id" element={<ComingSoon name="Contrato" />} />
           <Route path="/templates" element={<ComingSoon name="Templates" />} />
