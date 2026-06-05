@@ -5,6 +5,8 @@ import { LoginPage } from '@/modules/auth/pages/LoginPage'
 import { RegisterPage } from '@/modules/auth/pages/RegisterPage'
 import { DashboardPage } from '@/modules/dashboard/pages/DashboardPage'
 import { ContractsListPage } from '@/modules/contracts/pages/ContractsListPage'
+import { NewContractPage } from '@/modules/contracts/pages/NewContractPage'
+import { TemplatesListPage } from '@/modules/templates/pages/TemplatesListPage'
 
 function PrivateRoute() {
   const token = useAuthStore((s) => s.token)
@@ -31,8 +33,9 @@ export function AppRouter() {
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/contracts" element={<ContractsListPage />} />
+          <Route path="/contracts/new" element={<NewContractPage />} />
           <Route path="/contracts/:id" element={<ComingSoon name="Contrato" />} />
-          <Route path="/templates" element={<ComingSoon name="Templates" />} />
+          <Route path="/templates" element={<TemplatesListPage />} />
           <Route path="/obras" element={<ComingSoon name="Obras" />} />
           <Route path="/obras/:id" element={<ComingSoon name="Obra" />} />
           <Route path="/purchase-orders" element={<ComingSoon name="Ordens de Compra" />} />
