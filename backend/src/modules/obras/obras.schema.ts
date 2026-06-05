@@ -5,7 +5,7 @@ export const createObraSchema = z.object({
   name: z.string().min(2),
   address: z.string().min(5),
   budget: z.number().positive(),
-  contractId: z.string().cuid().optional(),
+  contractId: z.string().min(1).optional(),
   startDate: z.string().datetime({ offset: true }).optional(),
   endDate: z.string().datetime({ offset: true }).optional(),
 });
@@ -15,7 +15,7 @@ export const updateObraSchema = z.object({
   address: z.string().min(5).optional(),
   budget: z.number().positive().optional(),
   status: z.nativeEnum(ObraStatus).optional(),
-  contractId: z.string().cuid().nullable().optional(),
+  contractId: z.string().min(1).nullable().optional(),
   startDate: z.string().datetime({ offset: true }).nullable().optional(),
   endDate: z.string().datetime({ offset: true }).nullable().optional(),
 });

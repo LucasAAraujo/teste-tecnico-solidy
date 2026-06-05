@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { ContractStatus } from '@prisma/client';
 
 export const createContractSchema = z.object({
-  templateId: z.string().cuid().optional(),
+  templateId: z.string().min(1).optional(),
   title: z.string().min(2),
   category: z.string().min(1),
   body: z.string().optional(),

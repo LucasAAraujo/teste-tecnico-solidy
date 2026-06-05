@@ -197,8 +197,14 @@ export function NewContractPage() {
       const res = await api.post<{ id: string }>('/contracts', payload)
       navigate(`/contracts/${res.data.id}`)
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setSaveError(msg ?? 'Erro ao salvar contrato. Tente novamente.')
+      const data = (err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } })?.response?.data
+      if (data?.errors) {
+        const firstField = Object.keys(data.errors)[0]
+        const firstMsg = data.errors[firstField]?.[0]
+        setSaveError(firstMsg ? `Campo "${firstField}": ${firstMsg}` : (data.message ?? 'Erro de validação.'))
+      } else {
+        setSaveError(data?.message ?? 'Erro ao salvar contrato. Tente novamente.')
+      }
     } finally {
       setSaving(false)
     }
