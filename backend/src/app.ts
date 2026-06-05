@@ -8,6 +8,7 @@ import templatesRoutes from './modules/templates/templates.routes';
 import contractsRoutes from './modules/contracts/contracts.routes';
 import { contractSigRouter, signaturesRouter } from './modules/signatures/signatures.routes';
 import obrasRoutes from './modules/obras/obras.routes';
+import stepsRoutes from './modules/obras/steps/steps.routes';
 import { getByTokenHandler, signHandler } from './modules/signatures/signatures.controller';
 
 export const app = express();
@@ -38,5 +39,6 @@ app.use('/api/contracts', contractsRoutes);
 app.use('/api/contracts/:contractId/signatures', contractSigRouter);
 app.use('/api/signatures', signaturesRouter);
 app.use('/api/obras', obrasRoutes);
+app.use('/api/obras/:obraId/steps', stepsRoutes);
 
 app.use(errorMiddleware);

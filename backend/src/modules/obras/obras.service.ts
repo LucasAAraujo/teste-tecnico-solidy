@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../shared/lib/prisma';
 import { AppError } from '../../shared/middleware/error.middleware';
+import { seedDefaultSteps } from './steps/steps.service';
 import type { CreateObraInput, UpdateObraInput, ListObraQuery } from './obras.schema';
 
 export async function list(companyId: string, query: ListObraQuery) {
@@ -83,7 +84,7 @@ export async function create(companyId: string, input: CreateObraInput) {
     if (alreadyLinked) throw new AppError(409, 'Contrato já vinculado a outra obra.');
   }
 
-  return prisma.obra.create({
+  const obra = await prisma.obra.create({
     data: {
       companyId,
       name: input.name,
@@ -97,6 +98,10 @@ export async function create(companyId: string, input: CreateObraInput) {
       contract: { select: { id: true, title: true } },
     },
   });
+
+  await seedDefaultSteps(obra.id);
+
+  return obra;
 }
 
 export async function update(id: string, companyId: string, input: UpdateObraInput) {
