@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { env } from './config/env';
+import { errorMiddleware } from './shared/middleware/error.middleware';
 
 export const app = express();
 
@@ -20,3 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', env: env.NODE_ENV });
 });
+
+// Rotas serão registradas aqui (Etapas 6+)
+
+app.use(errorMiddleware);
