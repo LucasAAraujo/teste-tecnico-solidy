@@ -14,6 +14,7 @@ import { SignPage } from '@/modules/signatures/pages/SignPage'
 import { ObrasListPage } from '@/modules/obras/pages/ObrasListPage'
 import { ObraDetailPage } from '@/modules/obras/pages/ObraDetailPage'
 import { PurchaseOrdersPage } from '@/modules/purchase-orders/pages/PurchaseOrdersPage'
+import { ReportsPage } from '@/modules/reports/pages/ReportsPage'
 
 function PrivateRoute() {
   const token = useAuthStore((s) => s.token)
@@ -49,7 +50,7 @@ export function AppRouter() {
           <Route path="/obras" element={<ObrasListPage />} />
           <Route path="/obras/:id" element={<ObraDetailPage />} />
           <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
-          <Route path="/reports" element={<ComingSoon name="Relatórios" />} />
+          <Route path="/reports" element={<ReportsPage />} />
           <Route path="/settings" element={<ComingSoon name="Configurações" />} />
           <Route path="/profile" element={<ComingSoon name="Perfil" />} />
         </Route>
