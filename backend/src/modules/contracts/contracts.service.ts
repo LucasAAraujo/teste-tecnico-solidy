@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../shared/lib/prisma';
 import { AppError } from '../../shared/middleware/error.middleware';
+import { getVigenciaRestante, sortByUrgencia } from './contracts.vigencia';
 import type { CreateContractInput, UpdateContractInput, ListContractQuery } from './contracts.schema';
 
 // Substitui {{key}} no body pelo valor informado em fieldValues
@@ -138,4 +139,49 @@ export async function cancel(id: string, companyId: string) {
     where: { id },
     data: { status: 'CANCELLED' },
   });
+}
+
+// Marca como EXPIRED todos os contratos ativos com endDate < hoje (qualquer empresa)
+export async function markExpired() {
+  const result = await prisma.contract.updateMany({
+    where: {
+      endDate: { lt: new Date() },
+      status: { in: ['DRAFT', 'PENDING_SIGNATURE'] },
+    },
+    data: { status: 'EXPIRED' },
+  });
+  return result.count;
+}
+
+// Contratos ativos com endDate definido, enriquecidos com vigência e ordenados por urgência
+export async function manager(companyId: string) {
+  await markExpired();
+
+  const contracts = await prisma.contract.findMany({
+    where: {
+      companyId,
+      status: { in: ['DRAFT', 'PENDING_SIGNATURE', 'SIGNED', 'EXPIRED'] },
+      endDate: { not: null },
+    },
+    orderBy: { endDate: 'asc' },
+    select: {
+      id: true,
+      title: true,
+      category: true,
+      status: true,
+      value: true,
+      startDate: true,
+      endDate: true,
+      createdAt: true,
+      template: { select: { id: true, name: true } },
+      signatureRequests: { select: { id: true, status: true, signerName: true } },
+    },
+  });
+
+  const enriched = contracts.map((c) => ({
+    ...c,
+    vigencia: getVigenciaRestante(c.endDate!),
+  }));
+
+  return sortByUrgencia(enriched);
 }

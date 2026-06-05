@@ -8,6 +8,7 @@ import {
   createHandler,
   updateHandler,
   cancelHandler,
+  managerHandler,
 } from './contracts.controller';
 
 const router = Router();
@@ -16,6 +17,7 @@ router.use(authenticate, tenantContext, auditLog);
 
 router.get('/', listHandler);
 router.post('/', createHandler);
+router.get('/manager', managerHandler);  // antes de /:id
 router.get('/:id', getByIdHandler);
 router.put('/:id', updateHandler);
 router.delete('/:id', cancelHandler);

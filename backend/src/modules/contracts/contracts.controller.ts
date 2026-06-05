@@ -6,6 +6,14 @@ import {
 } from './contracts.schema';
 import * as svc from './contracts.service';
 
+export async function managerHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await svc.manager(req.companyId));
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function listHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const query = listContractSchema.parse(req.query);
