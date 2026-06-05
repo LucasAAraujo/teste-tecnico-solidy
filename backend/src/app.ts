@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
 import { env } from './config/env';
 import { errorMiddleware } from './shared/middleware/error.middleware';
 import authRoutes from './modules/auth/auth.routes';
@@ -9,6 +10,7 @@ import contractsRoutes from './modules/contracts/contracts.routes';
 import { contractSigRouter, signaturesRouter } from './modules/signatures/signatures.routes';
 import obrasRoutes from './modules/obras/obras.routes';
 import stepsRoutes from './modules/obras/steps/steps.routes';
+import vistoriasRoutes from './modules/obras/vistorias/vistorias.routes';
 import { getByTokenHandler, signHandler } from './modules/signatures/signatures.controller';
 
 export const app = express();
@@ -40,5 +42,9 @@ app.use('/api/contracts/:contractId/signatures', contractSigRouter);
 app.use('/api/signatures', signaturesRouter);
 app.use('/api/obras', obrasRoutes);
 app.use('/api/obras/:obraId/steps', stepsRoutes);
+app.use('/api/obras/:obraId/vistorias', vistoriasRoutes);
+
+// Arquivos estáticos de upload
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.use(errorMiddleware);
