@@ -6,6 +6,8 @@ import { RegisterPage } from '@/modules/auth/pages/RegisterPage'
 import { DashboardPage } from '@/modules/dashboard/pages/DashboardPage'
 import { ContractsListPage } from '@/modules/contracts/pages/ContractsListPage'
 import { NewContractPage } from '@/modules/contracts/pages/NewContractPage'
+import { ContractDetailPage } from '@/modules/contracts/pages/ContractDetailPage'
+import { ContractManagerPage } from '@/modules/contracts/pages/ContractManagerPage'
 import { TemplatesListPage } from '@/modules/templates/pages/TemplatesListPage'
 
 function PrivateRoute() {
@@ -34,7 +36,8 @@ export function AppRouter() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/contracts" element={<ContractsListPage />} />
           <Route path="/contracts/new" element={<NewContractPage />} />
-          <Route path="/contracts/:id" element={<ComingSoon name="Contrato" />} />
+          <Route path="/contracts/manager" element={<ContractManagerPage />} />
+          <Route path="/contracts/:id" element={<ContractDetailPage />} />
           <Route path="/templates" element={<TemplatesListPage />} />
           <Route path="/obras" element={<ComingSoon name="Obras" />} />
           <Route path="/obras/:id" element={<ComingSoon name="Obra" />} />
