@@ -154,6 +154,7 @@ export function NewContractPage() {
 
     if (selectedTemplate) {
       for (const field of selectedTemplate.fields) {
+        if (field.type === 'SIGNATURE') continue
         if (field.required && !form.fieldValues[field.key]?.trim()) {
           errs[field.key] = `${field.label} é obrigatório.`
         }

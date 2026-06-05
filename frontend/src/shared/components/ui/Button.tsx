@@ -34,10 +34,12 @@ export function Button({
   disabled,
   className = '',
   children,
+  type = 'button',
   ...props
 }: ButtonProps) {
   return (
     <button
+      type={type}
       {...props}
       disabled={disabled || loading}
       className={[
