@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/modules/auth/store/auth.store'
 
 interface TopBarProps {
   companyName?: string
@@ -10,6 +11,7 @@ export function TopBar({ companyName = 'Solidy', userName = 'Usuário' }: TopBar
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
+  const logout = useAuthStore((s) => s.logout)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -22,7 +24,7 @@ export function TopBar({ companyName = 'Solidy', userName = 'Usuário' }: TopBar
   }, [])
 
   function handleLogout() {
-    localStorage.removeItem('token')
+    logout()
     navigate('/login')
   }
 

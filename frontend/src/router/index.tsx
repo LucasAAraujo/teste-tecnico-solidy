@@ -1,13 +1,14 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { AppLayout } from '@/shared/components/layout/AppLayout'
+import { useAuthStore } from '@/modules/auth/store/auth.store'
+import { LoginPage } from '@/modules/auth/pages/LoginPage'
+import { RegisterPage } from '@/modules/auth/pages/RegisterPage'
 
-// Guarda de rota — será conectada ao auth.store na Etapa 23
 function PrivateRoute() {
-  const token = localStorage.getItem('token')
+  const token = useAuthStore((s) => s.token)
   return token ? <Outlet /> : <Navigate to="/login" replace />
 }
 
-// Placeholders — serão substituídos pelas páginas reais nas etapas seguintes
 function ComingSoon({ name }: { name: string }) {
   return (
     <div className="flex items-center justify-center h-64 text-secondary-400">
@@ -20,8 +21,8 @@ export function AppRouter() {
   return (
     <Routes>
       {/* Públicas */}
-      <Route path="/login" element={<ComingSoon name="Login" />} />
-      <Route path="/register" element={<ComingSoon name="Registro" />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       {/* Protegidas */}
       <Route element={<PrivateRoute />}>
