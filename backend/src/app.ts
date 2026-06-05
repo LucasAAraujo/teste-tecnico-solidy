@@ -12,6 +12,8 @@ import obrasRoutes from './modules/obras/obras.routes';
 import stepsRoutes from './modules/obras/steps/steps.routes';
 import vistoriasRoutes from './modules/obras/vistorias/vistorias.routes';
 import custosRoutes from './modules/obras/custos/custos.routes';
+import fornecedoresRoutes from './modules/obras/fornecedores/fornecedores.routes';
+import equipeRoutes from './modules/obras/equipe/equipe.routes';
 import { getByTokenHandler, signHandler } from './modules/signatures/signatures.controller';
 
 export const app = express();
@@ -45,6 +47,8 @@ app.use('/api/obras', obrasRoutes);
 app.use('/api/obras/:obraId/steps', stepsRoutes);
 app.use('/api/obras/:obraId/vistorias', vistoriasRoutes);
 app.use('/api/obras/:obraId/custos', custosRoutes);
+app.use('/api/obras/:obraId/fornecedores', fornecedoresRoutes);
+app.use('/api/obras/:obraId/equipe', equipeRoutes);
 
 // Arquivos estáticos de upload
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
