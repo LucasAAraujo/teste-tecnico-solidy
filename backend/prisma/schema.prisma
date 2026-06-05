@@ -1,0 +1,346 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// MULTI-TENANT ROOT
+// ─────────────────────────────────────────────
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  cnpj      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users     User[]
+  contracts Contract[]
+  templates ContractTemplate[]
+  obras     Obra[]
+  uploads   Upload[]
+  auditLogs AuditLog[]
+
+  @@map("companies")
+}
+
+// ─────────────────────────────────────────────
+// USERS & AUTH
+// ─────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  company   Company  @relation(fields: [companyId], references: [id])
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  USER
+  VIEWER
+}
+
+// ─────────────────────────────────────────────
+// CONTRACT TEMPLATES
+// ─────────────────────────────────────────────
+
+model ContractTemplate {
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  company   Company  @relation(fields: [companyId], references: [id])
+  name      String
+  category  String
+  body      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  fields    ContractTemplateField[]
+  contracts Contract[]
+
+  @@map("contract_templates")
+}
+
+model ContractTemplateField {
+  id         String           @id @default(cuid())
+  templateId String           @map("template_id")
+  template   ContractTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  key        String
+  label      String
+  type       FieldType
+  required   Boolean          @default(true)
+  order      Int
+
+  @@map("contract_template_fields")
+}
+
+enum FieldType {
+  TEXT
+  DATE
+  CURRENCY
+  CPF
+  CNPJ
+  SIGNATURE
+}
+
+// ─────────────────────────────────────────────
+// CONTRACTS
+// ─────────────────────────────────────────────
+
+model Contract {
+  id          String            @id @default(cuid())
+  companyId   String            @map("company_id")
+  company     Company           @relation(fields: [companyId], references: [id])
+  templateId  String?           @map("template_id")
+  template    ContractTemplate? @relation(fields: [templateId], references: [id])
+  title       String
+  category    String
+  status      ContractStatus    @default(DRAFT)
+  body        String
+  fieldValues Json              @map("field_values")
+  value       Decimal?
+  startDate   DateTime?         @map("start_date")
+  endDate     DateTime?         @map("end_date")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  signatureRequests SignatureRequest[]
+  obra              Obra?
+
+  @@map("contracts")
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING_SIGNATURE
+  SIGNED
+  EXPIRED
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────
+// ELECTRONIC SIGNATURES
+// ─────────────────────────────────────────────
+
+model SignatureRequest {
+  id          String      @id @default(cuid())
+  contractId  String      @map("contract_id")
+  contract    Contract    @relation(fields: [contractId], references: [id])
+  signerName  String      @map("signer_name")
+  signerEmail String?     @map("signer_email")
+  signerPhone String?     @map("signer_phone")
+  channel     SignChannel
+  token       String      @unique @default(cuid())
+  status      SignStatus  @default(PENDING)
+  sentAt      DateTime?   @map("sent_at")
+  signedAt    DateTime?   @map("signed_at")
+  expiresAt   DateTime    @map("expires_at")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  @@map("signature_requests")
+}
+
+enum SignChannel {
+  EMAIL
+  WHATSAPP
+  BOTH
+}
+
+enum SignStatus {
+  PENDING
+  SIGNED
+  EXPIRED
+}
+
+// ─────────────────────────────────────────────
+// OBRAS (CONSTRUCTION PROJECTS)
+// ─────────────────────────────────────────────
+
+model Obra {
+  id         String     @id @default(cuid())
+  companyId  String     @map("company_id")
+  company    Company    @relation(fields: [companyId], references: [id])
+  contractId String?    @unique @map("contract_id")
+  contract   Contract?  @relation(fields: [contractId], references: [id])
+  name       String
+  address    String
+  status     ObraStatus @default(PLANNING)
+  budget     Decimal
+  startDate  DateTime?  @map("start_date")
+  endDate    DateTime?  @map("end_date")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  steps          ObraStep[]
+  vistorias      ObraVistoria[]
+  custos         ObraCusto[]
+  fornecedores   ObraFornecedor[]
+  equipe         ObraEquipeMembro[]
+  purchaseOrders PurchaseOrder[]
+
+  @@map("obras")
+}
+
+enum ObraStatus {
+  PLANNING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model ObraStep {
+  id          String    @id @default(cuid())
+  obraId      String    @map("obra_id")
+  obra        Obra      @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  phase       Phase
+  title       String
+  description String?
+  done        Boolean   @default(false)
+  dueDate     DateTime? @map("due_date")
+  order       Int
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("obra_steps")
+}
+
+enum Phase {
+  PLANNING
+  EXECUTION
+  DELIVERY
+}
+
+model ObraVistoria {
+  id          String       @id @default(cuid())
+  obraId      String       @map("obra_id")
+  obra        Obra         @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  type        VistoriaType
+  description String
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  photos Upload[]
+
+  @@map("obra_vistorias")
+}
+
+enum VistoriaType {
+  INITIAL
+  FINAL
+}
+
+model ObraCusto {
+  id          String   @id @default(cuid())
+  obraId      String   @map("obra_id")
+  obra        Obra     @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  category    String
+  description String
+  amount      Decimal
+  date        DateTime
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("obra_custos")
+}
+
+model ObraFornecedor {
+  id              String   @id @default(cuid())
+  obraId          String   @map("obra_id")
+  obra            Obra     @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  nome            String
+  cnpj            String
+  contato         String
+  servicoPrestado String   @map("servico_prestado")
+  valorContratado Decimal  @map("valor_contratado")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("obra_fornecedores")
+}
+
+model ObraEquipeMembro {
+  id              String    @id @default(cuid())
+  obraId          String    @map("obra_id")
+  obra            Obra      @relation(fields: [obraId], references: [id], onDelete: Cascade)
+  nome            String
+  funcao          String
+  periodoInicio   DateTime  @map("periodo_inicio")
+  periodoFim      DateTime? @map("periodo_fim")
+  valorContratado Decimal   @map("valor_contratado")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("obra_equipe_membros")
+}
+
+// ─────────────────────────────────────────────
+// PURCHASE ORDERS
+// ─────────────────────────────────────────────
+
+model PurchaseOrder {
+  id        String   @id @default(cuid())
+  obraId    String   @map("obra_id")
+  obra      Obra     @relation(fields: [obraId], references: [id])
+  number    String   @unique
+  payerCnpj String   @map("payer_cnpj")
+  supplier  String
+  items     Json
+  total     Decimal
+  status    POStatus @default(DRAFT)
+  issuedAt  DateTime @default(now()) @map("issued_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("purchase_orders")
+}
+
+enum POStatus {
+  DRAFT
+  APPROVED
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────
+// UPLOADS (polymorphic)
+// ─────────────────────────────────────────────
+
+model Upload {
+  id         String        @id @default(cuid())
+  companyId  String        @map("company_id")
+  company    Company       @relation(fields: [companyId], references: [id])
+  entityType String        @map("entity_type")
+  entityId   String        @map("entity_id")
+  vistoriaId String?       @map("vistoria_id")
+  vistoria   ObraVistoria? @relation(fields: [vistoriaId], references: [id])
+  filename   String
+  mimetype   String
+  url        String
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  @@map("uploads")
+}
+
+// ─────────────────────────────────────────────
+// AUDIT LOGS
+// ─────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  companyId  String   @map("company_id")
+  company    Company  @relation(fields: [companyId], references: [id])
+  userId     String   @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  payload    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}
