@@ -327,14 +327,6 @@ Verifique usuário, senha, host e nome do banco. Use `psql` para testar a conex�
 **Erro de CORS no frontend**
 Confirme que `PORT=3333` no backend e que o `APP_URL` no `.env` aponta para `http://localhost:5173`.
 
-**Upload de fotos não funciona**
-O diretório `backend/uploads/` é criado automaticamente. Em produção, configure um storage externo (S3, Cloudflare R2) apontado pela variável de ambiente correspondente.
-
 **E-mails não são enviados**
 Configure `SMTP_USER` e `SMTP_PASS`. Para Gmail, gere uma *senha de app* em [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords). Sem configuração, o link de assinatura é exibido no log do servidor.
 
----
-
-## Licença
-
-MIT — uso livre para fins educacionais e comerciais.
